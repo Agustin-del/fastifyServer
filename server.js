@@ -3,6 +3,9 @@ import path from 'path';
 // import { readFile } from 'fs/promises';
 import fastifyStatic from '@fastify/static';
 import { fileURLToPath } from 'url';
+import { config } from 'dotenv';
+
+config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
