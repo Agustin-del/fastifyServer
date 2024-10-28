@@ -1,7 +1,6 @@
 import Fastify from 'fastify';
 import path from 'node:path';
-// import { readFile } from 'fs/promises';
-import fastifyStatic from '@fastify/static';
+import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { config } from 'dotenv';
 
@@ -20,20 +19,14 @@ const fastify = Fastify({
     }
 });
 
-fastify.register(fastifyStatic, {
-    root: path.join(__dirname, 'static'),
-    prefix: '/'
-})
-
 fastify.get('/', async function(request, reply) {
-    // try {
-    //     const filePath = path.join(__dirname, 'static', 'index.html');
-    //     const fileContent = await readFile(filePath, 'utf8');
-    //     reply.type('text/html').send(fileContent);
-    // } catch (error) {
-    //     reply.code(500).send('Error reading file');
-    // }
-    return reply.sendFile('index.html');
+    try {
+        const filePath = path.join(__dirname, 'static', 'index.html');
+        const fileContent = await readFile(filePath, 'utf8');
+        reply.type('text/html').send(fileContent);
+    } catch (error) {
+        reply.code(500).send('Error reading file');
+    }
 })
 
 fastify.post('/register', async function(req, rep){

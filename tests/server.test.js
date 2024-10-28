@@ -1,5 +1,5 @@
 import Fastify from "fastify";
-import fastifyStatic from "@fastify/static";
+import { readFile} from 'node:fs/promises';;
 import {config} from 'dotenv';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
@@ -21,13 +21,14 @@ const createFastifyInstance = () => {
             }
         });
 
-        fastify.register(fastifyStatic, {
-            root:path.join(__dirname, '../static'),
-            prefix:'/',
-        });
-
         fastify.get('/', async function(request, reply) {
-            return reply.sendFile('index.html');
+            try {
+                const filePath = path.join(__dirname, '../static', 'index.html');
+                const fileContent = await readFile(filePath, 'utf8');
+                reply.type('text/html').send(fileContent);
+            } catch (error) {
+                reply.code(500).send('Error reading file');
+            }
         });
 
         //Falta aplicar un schema.
