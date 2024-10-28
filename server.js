@@ -1,8 +1,8 @@
 import Fastify from 'fastify';
-import path from 'path';
+import path from 'node:path';
 // import { readFile } from 'fs/promises';
 import fastifyStatic from '@fastify/static';
-import { fileURLToPath } from 'url';
+import { fileURLToPath } from 'node:url';
 import { config } from 'dotenv';
 
 config();
@@ -34,6 +34,14 @@ fastify.get('/', async function(request, reply) {
     //     reply.code(500).send('Error reading file');
     // }
     return reply.sendFile('index.html');
+})
+
+fastify.post('/register', async function(req, rep){
+    const {username, email, password} = req.body;
+    console.log({username: username[username], email: email[email], password:password[password]});
+    rep.status(201).send({
+        message : "User registered succesfully",
+    });
 })
 
 const start = async () => {
