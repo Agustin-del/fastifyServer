@@ -9,6 +9,12 @@ const __dirname = path.dirname(__filename);
 
 const fastify = Fastify({
     logger: true,
+    http2:true,
+    https: {
+        allowHTTP1: true,
+        key: process.env.FASTIFY_KEY,
+        cert: process.env.FASTIFY_CERT,
+    }
 });
 
 fastify.register(fastifyStatic, {
