@@ -9,6 +9,22 @@ config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const registerSchema = {
+    body: {
+        type:'object',
+        required: ['username', 'email', 'password'],
+        properties: {
+            username: {type: 'string', minLength: 3},
+            email: {type: 'string', format:'email'},
+            password: { 
+                type: 'string', 
+                minLength: 8,
+                pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$"
+            }
+        },
+        additionalProperties:false,
+    }
+};    
 
 const createFastifyInstance = () => {
     const fastify = Fastify({
@@ -31,8 +47,7 @@ const createFastifyInstance = () => {
             }
         });
 
-        //Falta aplicar un schema.
-        fastify.post('/register', async function(req, rep){
+        fastify.post('/register', {schema: registerSchema}, async function(req, rep){
             rep.status(201).send({
                 message : "User registered succesfully",
             });
@@ -67,11 +82,79 @@ describe('Registro de usuario', () => {
             .send({
                 username:"testUser",
                 email:"testuser@example.com",
-                password:"testPassword",
+                password:"abC!1234",
         })
         expect(response.status).toBe(201);
         expect(response.body).toEqual({
             message:"User registered succesfully",
         })
     })
+
+    test('should fail if a field is missing', async () => {{
+        let response = await request(fastify.server)
+            .post('/register')
+            .send({
+                email:"testuser@example.com",
+                password:"abC!1234",
+            })
+        expect(response.status).toBe(400);
+        expect(response.body.message).toMatch(/body must have required property 'username'/);
+        
+        response = await request(fastify.server)
+            .post('/register')
+            .send({
+                username:'testuser',
+                password:"abC!1234",
+            })
+        expect(response.status).toBe(400);
+        expect(response.body.message).toMatch(/body must have required property 'email'/);
+
+        response = await request(fastify.server)
+            .post('/register')
+            .send({
+                username:'testuser',
+                email:"testuser@example.com",
+            })
+        expect(response.status).toBe(400);
+        expect(response.body.message).toMatch(/body must have required property 'password'/);
+
+    }})
+
+    test('should return error if username is invalid', async () => {
+        const response = await request(fastify.server)
+            .post('/register')
+            .send({
+                username:'',
+                email:"testuser@example.com",
+                password:"abC!1234",
+            })
+            expect(response.status).toBe(400);
+            expect(response.body.message).toMatch(/username must NOT have fewer than 3 characters/);
+
+    })
+
+    test('should return error if email is invalid', async () => {
+        const response = await request(fastify.server)
+            .post('/register')
+            .send({
+                username:"testUser",
+                email:"",
+                password:"abC!1234",
+            })
+            expect(response.status).toBe(400);
+            expect(response.body.message).toMatch(/email must match format/);
+    })
+
+    test('should return error if password is invalid', async () => {
+        const response = await request(fastify.server)
+            .post('/register')
+            .send({
+                username:"testUser",
+                email:"testuser@example.com",
+                password:"",
+            })
+            expect(response.status).toBe(400);
+            expect(response.body.message).toMatch(/password must match format/)
+    })
+    
 })

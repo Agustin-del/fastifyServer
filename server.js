@@ -8,6 +8,23 @@ config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const registerSchema = {
+    body: {
+        type:'object',
+        required: ['username', 'email', 'password'],
+        properties: {
+            username: {type: 'string', minLength: 3},
+            email: {type: 'string', format:'email'},
+            password: { 
+                type: 'string', 
+                minLength: 8,
+                pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$"
+            }
+        },
+        additionalProperties:false,
+    }
+};    
+
 
 const fastify = Fastify({
     logger: true,
@@ -29,7 +46,7 @@ fastify.get('/', async function(request, reply) {
     }
 })
 
-fastify.post('/register', async function(req, rep){
+fastify.post('/register', {schema: registerSchema} async function(req, rep){
     const {username, email, password} = req.body;
     console.log({username: username[username], email: email[email], password:password[password]});
     rep.status(201).send({
