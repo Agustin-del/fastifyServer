@@ -46,7 +46,7 @@ fastify.get('/', async function(request, reply) {
     }
 })
 
-fastify.post('/register', {schema: registerSchema} async function(req, rep){
+fastify.post('/register', {schema: registerSchema}, async function(req, rep){
     const {username, email, password} = req.body;
     console.log({username: username[username], email: email[email], password:password[password]});
     rep.status(201).send({
