@@ -1,22 +1,32 @@
 import Fastify from "fastify";
 import { readFile} from 'node:fs/promises';
-import {config} from 'dotenv';
+import fastifyEnv from '@fastify/env';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import request from "supertest";
 
 //me falta ver lo de los campos adicionales, lo voy a dejar fallando.
 
-config();
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+let NEXT_PORT = 3000;
+
+const options = {
+    dotenv:true,
+    schema: {    
+        type: 'object',
+        properties: {
+            FASTIFY_KEY: { type: 'string' },
+            FASTIFY_CERT: { type: 'string' },
+        },
+        required: ['FASTIFY_KEY', 'FASTIFY_CERT']
+    }
+};
 
 const registerSchema = {
     body: {
         type:'object',
         required: ['username', 'email', 'password'],
-        additionalProperties: false,
         properties: {
             username: {type: 'string', minLength: 3},
             email: {type: 'string', format:'email'},
@@ -24,20 +34,32 @@ const registerSchema = {
                 type: 'string', 
                 minLength: 8,
                 pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$"
-            }
+            },
         },
+        additionalProperties: false,
     }
 };    
 
 const createFastifyInstance = () => {
+    
     const fastify = Fastify({
         logger:true,
-        http2:true,
-        https: {
-                allowHTTP1:true,
+    });
+
+    fastify.port = NEXT_PORT++;
+    fastify.register(fastifyEnv, options)
+
+    .ready((error) => {
+        if(error) {
+            console.error(error);
+        } else {
+            fastify.http2 = true;
+            fastify.https =  {
+                allowHTTP1: true,
                 key: process.env.FASTIFY_KEY,
                 cert: process.env.FASTIFY_CERT,
-        }
+            };
+        };
     });
 
     fastify.get('/', async function(request, reply) {
@@ -55,22 +77,34 @@ const createFastifyInstance = () => {
             message : "User registered succesfully",
         });
     });
-        
+    
     return fastify;
 };
 
+let fastify;
+
+beforeAll(async () => {
+    fastify = createFastifyInstance();
+    await fastify.listen({port:fastify.port});
+})
+
+afterAll( async () => {
+    fastify.close();
+})
+
+describe('Carga variables de entorno', () => {
+    test('should exist FASTIFY_KEY and have private key format', async () => {
+        expect(process.env.FASTIFY_KEY).toBeDefined();
+        expect(process.env.FASTIFY_KEY).toContain("-----BEGIN PRIVATE KEY-----", "-----END PRIVATE KEY-----");
+    });
+
+    test('should exist FASTIFY_CERT and have certificate format', async () => {
+        expect(process.env.FASTIFY_CERT).toBeDefined();
+        expect(process.env.FASTIFY_CERT).toContain("-----BEGIN CERTIFICATE-----", "-----END CERTIFICATE-----");
+    });
+});
+
 describe('Carga index', () => {
-    let fastify;
-    
-    beforeAll(async () => {
-        fastify = createFastifyInstance();
-        await fastify.listen({port:3000});
-    });
-
-    afterAll(async () => {
-        await fastify.close();
-    });
-
     test('should return 200 and HTML content', async () => {
         const response = await request(fastify.server).get('/');
         expect(response.status).toBe(200);
@@ -80,17 +114,7 @@ describe('Carga index', () => {
 });
 
 describe('Registro de usuario', () => {
-    let fastify;
-
-    beforeAll(async () => {
-        fastify = createFastifyInstance();
-        await fastify.listen({port:3000});
-    });
-
-    afterAll(async () => {
-        await fastify.close();
-    });
-
+    
     test('should register a user succesfully', async () => {
         const response = await request(fastify.server)
             .post('/register')
@@ -183,3 +207,17 @@ describe('Registro de usuario', () => {
             expect(response.body.message).toMatch(/what/);
     });
 });
+
+describe('Upload file', () => {
+    test('should upload file successfully', async () => {
+        const response = await request(fastify.server)
+            .post('/upload')
+            .set('Content-type', 'multipart/form-data')
+            .attach('file', path.join(__dirname, '/resources/file.txt'));
+        
+        expect(response.status).toBe(201);
+        expect(response.body).toEqual({
+            message: "File uploaded succesfully",
+        });
+    });
+})

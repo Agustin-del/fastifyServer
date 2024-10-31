@@ -2,12 +2,24 @@ import Fastify from 'fastify';
 import path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { config } from 'dotenv';
+import fastifyEnv from '@fastify/env';
 
-config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const options = {
+    dotenv:true,
+    schema: {     // Define el esquema de las variables de entorno
+        type: 'object',
+        properties: {
+            FASTIFY_KEY: { type: 'string' },
+            FASTIFY_CERT: { type: 'string' },
+        },
+        required: ['FASTIFY_KEY', 'FASTIFY_CERT']
+    }
+};
+
 const registerSchema = {
     body: {
         type:'object',
@@ -28,13 +40,21 @@ const registerSchema = {
 
 const fastify = Fastify({
     logger: true,
-    http2:true,
-    https: {
-        allowHTTP1: true,
-        key: process.env.FASTIFY_KEY,
-        cert: process.env.FASTIFY_CERT,
-    }
 });
+
+fastify.register(fastifyEnv, options)
+    .ready((error) => {
+        if(error) {
+            console.error(error);
+        } else {
+            fastify.http2 = true;
+            fastify.https =  {
+                allowHTTP1: true,
+                key: process.env.FASTIFY_KEY,
+                cert: process.env.FASTIFY_CERT,
+            };
+        };
+    });
 
 fastify.get('/', async function(request, reply) {
     try {
@@ -44,7 +64,7 @@ fastify.get('/', async function(request, reply) {
     } catch (error) {
         reply.code(500).send('Error reading file');
     }
-})
+});
 
 fastify.post('/register', {schema: registerSchema}, async function(req, rep){
     const {username, email, password} = req.body;
@@ -52,7 +72,7 @@ fastify.post('/register', {schema: registerSchema}, async function(req, rep){
     rep.status(201).send({
         message : "User registered succesfully",
     });
-})
+});
 
 const start = async () => {
     try {
@@ -61,6 +81,6 @@ const start = async () => {
         fastify.log.error(e);
         process.exit(1);
     }
-}
+};
 
-start()
+start();
