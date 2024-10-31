@@ -1,8 +1,11 @@
 import Fastify from 'fastify';
+import fastifyEnv from '@fastify/env';
+import fastifyMultipart from '@fastify/multipart';
 import path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import fastifyEnv from '@fastify/env';
+import fs from 'node:fs';
+import { pipeline } from 'node:stream/promises';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -21,9 +24,10 @@ const options = {
 };
 
 const registerSchema = {
+    consumes:['multipart/form-data'],
     body: {
         type:'object',
-        required: ['username', 'email', 'password'],
+        required: ['username', 'email', 'password', 'foto'],
         properties: {
             username: {type: 'string', minLength: 3},
             email: {type: 'string', format:'email'},
@@ -31,12 +35,20 @@ const registerSchema = {
                 type: 'string', 
                 minLength: 8,
                 pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$"
+            },
+            foto: {
+                type : 'object',
+                // required: ['data', 'filename', 'mimetype'],
+                // properties: {
+                //     data: {type:'string', format:'binary'},
+                //     filename:{type:'string'},
+                //     mimetype:{type:'string'}
+                // },
             }
         },
-        additionalProperties:false,
+        additionalProperties: false,
     }
 };    
-
 
 const fastify = Fastify({
     logger: true,
@@ -56,6 +68,8 @@ fastify.register(fastifyEnv, options)
         };
     });
 
+fastify.register(fastifyMultipart, { attachFieldsToBody: 'keyValues'});
+
 fastify.get('/', async function(request, reply) {
     try {
         const filePath = path.join(__dirname, 'static', 'index.html');
@@ -67,12 +81,32 @@ fastify.get('/', async function(request, reply) {
 });
 
 fastify.post('/register', {schema: registerSchema}, async function(req, rep){
-    const {username, email, password} = req.body;
+    let username, email, password, data;
+    
+    try{
+        username = await req.body.username;
+        email = await req.body.email;
+        password = await req.body.password;
+        data = await req.file();
+        await pipeline(data.file, fs.createWriteStream(path.join('/' + data.filename)))
+    } catch (e) {
+        console.error(e);
+    }
+
     console.log({username: username[username], email: email[email], password:password[password]});
+
     rep.status(201).send({
         message : "User registered succesfully",
     });
 });
+
+// fastify.post('/upload', async function (req, rep) {
+//     const data = await req.file();
+//     await pipeline(data.file, fs.createWriteStream(data.filename))
+//     rep.status(201).send({
+//         message: "File uploaded succesfully",
+//     })
+// })
 
 const start = async () => {
     try {

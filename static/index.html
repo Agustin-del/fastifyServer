@@ -15,25 +15,22 @@
         <label for="email">Correo electrónico:</label>
         <input type="email" id="email" name="email">
         <input type="submit" name="send" id="send">
+        <label for="foto">Sube tu foto</label>
+        <input type="file" name="foto" id="foto">
     </form>
     <script>
         const button = document.querySelector("input[type ='submit']");
         button.addEventListener('click', () => {
             button.preventDefault();
-            const username = document.getElementById("username").value;
-            const password = document.getElementById("password").value;
-            const email = document.getElementById("email").value;
-            const data = {
-                "username": username,
-                "email": email,
-                "password":password
-            }
+            const form = document.querySelector(form);
+            const formData = new FormData(data);
+
             fetch('https://localhost:3000/register', {
                 method: 'POST',
                 headers: {
-                    'content-type': "application/json",
+                    'content-type': "multipart/form-data",
                 },
-                body: JSON.stringify(data)
+                body: formData,
             })
             .then(response => {
                 if(!response.ok) {
