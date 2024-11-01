@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import fastifyEnv from '@fastify/env';
 import fastifyMultipart from '@fastify/multipart';
+import helmet from '@fastify/helmet';
 import path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -9,14 +10,9 @@ import fs from 'node:fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const optionsMultipart = {
-    attachFieldsToBody: 'keyValues',
-    sharedSchemaId:'#archivo',
-}
-
 const optionsEnv = {
     dotenv:true,
-    schema: {     // Define el esquema de las variables de entorno
+    schema: {   
         type: 'object',
         properties: {
             FASTIFY_KEY: { type: 'string' },
@@ -25,6 +21,13 @@ const optionsEnv = {
         required: ['FASTIFY_KEY', 'FASTIFY_CERT']
     }
 };
+
+const optionsMultipart = {
+    attachFieldsToBody: 'keyValues',
+    sharedSchemaId:'#archivo',
+}
+
+const optionsHelmet = {}
 
 const registerSchema = {
     consumes: ['multipart/form-data'],
@@ -65,6 +68,8 @@ fastify.register(fastifyEnv, optionsEnv)
     });
 
 fastify.register(fastifyMultipart, optionsMultipart);
+
+fastify.register(helmet, optionsHelmet);
 
 fastify.get('/', async function(request, reply) {
     try {

@@ -1,7 +1,7 @@
 import Fastify from "fastify";
 import fastifyEnv from '@fastify/env';
 import fastifyMultipart from "@fastify/multipart";
-import { pipeline} from "node:stream/promises";
+import helmet from '@fastify/helmet';
 import fs from 'node:fs'
 import { readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
@@ -30,7 +30,11 @@ const optionsEnv = {
 
 const optionsMultipart = {
     attachFieldsToBody: 'keyValues',
-}
+};
+
+const optionsHelmet = {
+
+};
 
 const registerSchema = {
     consumes: ['multipart/form-data'],
@@ -76,6 +80,8 @@ const createFastifyInstance = () => {
     });
 
     fastify.register(fastifyMultipart, optionsMultipart);
+
+    fastify.register(helmet, optionsHelmet);
 
     fastify.get('/', async function(request, reply) {
         try {
@@ -131,6 +137,18 @@ describe('Carga variables de entorno', () => {
         expect(process.env.FASTIFY_CERT).toContain("-----BEGIN CERTIFICATE-----", "-----END CERTIFICATE-----");
     });
 });
+
+describe('tests headers', () => {
+    test('should have csp headers', async () => {
+        const response = await request(fastify.server)
+            .get('/')
+            .set('Accept', 'text/html')
+            .set('Content-Type', 'text/html')
+            .send()
+        
+            expect(response.headers).toHaveProperty('content-security-policy')
+    })
+})
 
 describe('Carga index', () => {
     test('should return 200 and HTML content', async () => {
