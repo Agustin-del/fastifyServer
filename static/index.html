@@ -3,39 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registo de usuaro</title>
+    <title>Registro de usuario</title>
 </head>
 <body>
-    <h1>Formulario de regitro</h1>
-    <form>
+    <h1>Formulario de registro</h1>
+    <form enctype="multipart/form-data">
         <label for="username">Nombre de usuario:</label>
         <input type="text" id="username" name="username">
         <label for="password">Contraseña:</label>
         <input type="password" id="password" name="password">
         <label for="email">Correo electrónico:</label>
         <input type="email" id="email" name="email">
-        <input type="submit" name="send" id="send">
         <label for="foto">Sube tu foto</label>
         <input type="file" name="foto" id="foto">
+        <input type="submit" name="send" id="send">
     </form>
     <script>
-        const button = document.querySelector("input[type ='submit']");
-        button.addEventListener('click', () => {
-            button.preventDefault();
-            const form = document.querySelector(form);
-            const formData = new FormData(data);
+        const form = document.querySelector('form')
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
 
-            fetch('https://localhost:3000/register', {
+            fetch('/register', {
                 method: 'POST',
-                headers: {
-                    'content-type': "multipart/form-data",
-                },
                 body: formData,
             })
             .then(response => {
-                if(!response.ok) {
-                    throw new Error('Algo fallo en la conexión')
-                }
+    
                 return response.json();
             })
             .then(data => {

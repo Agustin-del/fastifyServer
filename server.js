@@ -5,13 +5,16 @@ import path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
-import { pipeline } from 'node:stream/promises';
-
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const options = {
+const optionsMultipart = {
+    attachFieldsToBody: 'keyValues',
+    sharedSchemaId:'#archivo',
+}
+
+const optionsEnv = {
     dotenv:true,
     schema: {     // Define el esquema de las variables de entorno
         type: 'object',
@@ -24,7 +27,7 @@ const options = {
 };
 
 const registerSchema = {
-    consumes:['multipart/form-data'],
+    consumes: ['multipart/form-data'],
     body: {
         type:'object',
         required: ['username', 'email', 'password', 'foto'],
@@ -37,24 +40,17 @@ const registerSchema = {
                 pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$"
             },
             foto: {
-                type : 'object',
-                // required: ['data', 'filename', 'mimetype'],
-                // properties: {
-                //     data: {type:'string', format:'binary'},
-                //     filename:{type:'string'},
-                //     mimetype:{type:'string'}
-                // },
+                type: 'object'
             }
         },
-        additionalProperties: false,
-    }
+        additionalProperties: false,    }
 };    
 
 const fastify = Fastify({
     logger: true,
 });
 
-fastify.register(fastifyEnv, options)
+fastify.register(fastifyEnv, optionsEnv)
     .ready((error) => {
         if(error) {
             console.error(error);
@@ -68,7 +64,7 @@ fastify.register(fastifyEnv, options)
         };
     });
 
-fastify.register(fastifyMultipart, { attachFieldsToBody: 'keyValues'});
+fastify.register(fastifyMultipart, optionsMultipart);
 
 fastify.get('/', async function(request, reply) {
     try {
@@ -80,33 +76,24 @@ fastify.get('/', async function(request, reply) {
     }
 });
 
-fastify.post('/register', {schema: registerSchema}, async function(req, rep){
-    let username, email, password, data;
-    
-    try{
-        username = await req.body.username;
-        email = await req.body.email;
-        password = await req.body.password;
-        data = await req.file();
-        await pipeline(data.file, fs.createWriteStream(path.join('/' + data.filename)))
+fastify.post('/register', {schema:registerSchema}, async function(req, rep){
+    try {
+        const {username, email, password, foto} = req.body
+        fs.writeFile(path.join(__dirname, 'resources', `${email}.jpg`), foto, e => {
+            if(e) {
+                throw e;
+            }
+        })
+        console.log({username, email, password})
+        rep.status(201).send({
+            message:"Cliente registrado exitosamente"
+        })
     } catch (e) {
-        console.error(e);
-    }
-
-    console.log({username: username[username], email: email[email], password:password[password]});
-
-    rep.status(201).send({
-        message : "User registered succesfully",
-    });
+        rep.status(400).send({
+            message: "Sucedió un error durante el registro: " + e.message
+        })
+    } 
 });
-
-// fastify.post('/upload', async function (req, rep) {
-//     const data = await req.file();
-//     await pipeline(data.file, fs.createWriteStream(data.filename))
-//     rep.status(201).send({
-//         message: "File uploaded succesfully",
-//     })
-// })
 
 const start = async () => {
     try {
