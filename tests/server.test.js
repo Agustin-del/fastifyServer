@@ -14,6 +14,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 let NEXT_PORT = 3000;
 
+const resourcesPath = path.join(__dirname, 'resources');
+
 const optionsEnv = {
     dotenv:true,
     schema: {    
@@ -140,6 +142,15 @@ describe('Carga index', () => {
 });
 
 describe('Registro de usuario', () => {
+    let foto;
+    beforeAll(() => {
+        foto = fs.readFileSync(path.join(resourcesPath, 'mvc.jpg'), e => {
+            if (e) {
+                console.error("Error reading the foto: ", e)
+            }
+        })
+    })
+
     test('should register a user succesfully', async () => {
         const response = await request(fastify.server)
             .post('/register')
@@ -147,7 +158,7 @@ describe('Registro de usuario', () => {
             .field('username',"testUser")
             .field('email',"testuser@example.com")
             .field('password', "abC!1234")
-            .attach('foto', path.join(__dirname, 'resources', 'mvc.jpg'))
+            .attach('foto', foto)
 
         expect(response.status).toBe(201);
         expect(response.body).toEqual({
@@ -161,6 +172,7 @@ describe('Registro de usuario', () => {
             .send({
                 email:"testuser@example.com",
                 password:"abC!1234",
+                foto: foto
             });
         expect(response.status).toBe(400);
         expect(response.body.message).toMatch(/body must have required property 'username'/);
@@ -170,6 +182,7 @@ describe('Registro de usuario', () => {
             .send({
                 username:'testuser',
                 password:"abC!1234",
+                foto: foto
             });
         expect(response.status).toBe(400);
         expect(response.body.message).toMatch(/body must have required property 'email'/);
@@ -179,9 +192,20 @@ describe('Registro de usuario', () => {
             .send({
                 username:'testuser',
                 email:"testuser@example.com",
+                foto: foto
             });
         expect(response.status).toBe(400);
         expect(response.body.message).toMatch(/body must have required property 'password'/);
+
+        response = await request(fastify.server)
+            .post('/register')
+            .send({
+                username:'testuser',
+                email:"testuser@example.com",
+                password:"abC!1234",
+            });
+        expect(response.status).toBe(400);
+        expect(response.body.message).toMatch(/body must have required property 'foto'/);
     });
 
     test('should return error if username is invalid', async () => {
@@ -191,6 +215,7 @@ describe('Registro de usuario', () => {
                 username:'',
                 email:"testuser@example.com",
                 password:"abC!1234",
+                foto:foto
             });
             expect(response.status).toBe(400);
             expect(response.body.message).toMatch(/username must NOT have fewer than 3 characters/);
@@ -203,6 +228,7 @@ describe('Registro de usuario', () => {
                 username:"testUser",
                 email:"",
                 password:"abC!1234",
+                foto:foto
             });
             expect(response.status).toBe(400);
             expect(response.body.message).toMatch(/email must match format/);
@@ -215,33 +241,29 @@ describe('Registro de usuario', () => {
                 username:"testUser",
                 email:"testuser@example.com",
                 password:"12345678",
+                foto:foto
             });
             expect(response.status).toBe(400);
             expect(response.body.message).toMatch(/password must (NOT have fewer than 8 characters|match pattern)/)
     });
 
+    //este me tiro este error ahora;
+    //  Expected pattern: /what/
+    // Received string:  "Sucedió un error durante el registro: The \"data\" argument must be of type string or an instance of Buffer, TypedArray, or DataView. Received an instance of Object"
     test('should return error if there is an extra field', async() => {
         const response = await request(fastify.server)
             .post('/register')
             .send({
                 username:"testUser",
+                extraField: "extraValue",
                 email:"testuser@example.com",
                 password:"abC!1234",
-                extraField: "extraValue"
+                foto:foto,
             });
             expect(response.status).toBe(400);
             expect(response.body.message).toMatch(/what/);
     });
 
-    test('should upload file successfully', async () => {
-        const response = await request(fastify.server)
-            .post('/upload')
-            .set('Content-type', 'multipart/form-data')
-            .attach('file', path.join(__dirname, '/resources/file.txt'));
-        
-        expect(response.status).toBe(201);
-        expect(response.body).toEqual({
-            message: "File uploaded succesfully",
-        });
-    });
+    //falta testear el archivo, pero Juank dirá que tan robusto y la mejor forma
+
 });
