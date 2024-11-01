@@ -99,7 +99,7 @@ fastify.post('/register', {schema:registerSchema}, async function(req, rep){
         })
     } 
 });
-
+    
 const start = async () => {
     try {
         await fastify.listen({port: 3000});

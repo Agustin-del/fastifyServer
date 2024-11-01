@@ -147,7 +147,7 @@ describe('tests headers', () => {
             .send()
         
             expect(response.headers).toHaveProperty('content-security-policy')
-    })
+    });
 })
 
 describe('Carga index', () => {
