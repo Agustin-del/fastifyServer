@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self';">
+    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self';"> -->
     <title>Registro de usuario</title>
 </head>
 <body>
@@ -19,27 +19,6 @@
         <input type="file" name="foto" id="foto">
         <input type="submit" name="send" id="send">
     </form>
-    <script>
-        const form = document.querySelector('form')
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const formData = new FormData(form);
-
-            fetch('/register', {
-                method: 'POST',
-                body: formData,
-            })
-            .then(response => {
-    
-                return response.json();
-            })
-            .then(data => {
-                console.log(data);
-            })
-            .catch(error => {
-                console.error(error);
-            })
-        })
-    </script>
+    <script src="index.js"></script>
 </body>
 </html>

@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import fastifyEnv from '@fastify/env';
 import fastifyMultipart from '@fastify/multipart';
+// import fastifyStatic from '@fastify/static';
 import helmet from '@fastify/helmet';
 import path from 'node:path';
 import { readFile } from 'node:fs/promises';
@@ -71,6 +72,11 @@ fastify.register(fastifyMultipart, optionsMultipart);
 
 fastify.register(helmet, optionsHelmet);
 
+fastify.register(fastifyStatic, {
+    root: path.join(__dirname, 'static'),
+})
+
+//Esto se puede simplificar, creo, el plugin fastifyStatic, sirve los archivos, con los mime adecuados
 fastify.get('/', async function(request, reply) {
     try {
         const filePath = path.join(__dirname, 'static', 'index.html');
@@ -78,6 +84,17 @@ fastify.get('/', async function(request, reply) {
         reply.type('text/html').send(fileContent);
     } catch (error) {
         reply.code(500).send('Error reading file');
+    }
+    // return reply.sendFile('index.html')
+});
+
+fastify.get('/index.js', async function (request, reply) {
+    try {
+        const filePath = path.join(__dirname, 'static', 'index.js');
+        const fileContent = await readFile(filePath, 'utf8');
+        reply.type('application/javascript').send(fileContent);
+    } catch (error) {
+        reply.code(500).send('Error reading JavaScript file');
     }
 });
 
