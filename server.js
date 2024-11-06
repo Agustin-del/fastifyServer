@@ -1,12 +1,14 @@
 import Fastify from 'fastify';
 import fastifyEnv from '@fastify/env';
 import fastifyMultipart from '@fastify/multipart';
+import fastifyWebsocket from '@fastify/websocket';
 // import fastifyStatic from '@fastify/static';
 import helmet from '@fastify/helmet';
 import path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,10 +27,10 @@ const optionsEnv = {
 
 const optionsMultipart = {
     attachFieldsToBody: 'keyValues',
-    sharedSchemaId:'#archivo',
 }
 
-const optionsHelmet = {}
+const optionsHelmet = {
+}
 
 const registerSchema = {
     consumes: ['multipart/form-data'],
@@ -54,28 +56,49 @@ const fastify = Fastify({
     logger: true,
 });
 
-fastify.register(fastifyEnv, optionsEnv)
-    .ready((error) => {
-        if(error) {
-            console.error(error);
-        } else {
-            fastify.http2 = true;
-            fastify.https =  {
-                allowHTTP1: true,
-                key: process.env.FASTIFY_KEY,
-                cert: process.env.FASTIFY_CERT,
-            };
-        };
-    });
+fastify.register(fastifyWebsocket);
+// fastify.register(fastifyEnv, optionsEnv)
+//     .ready((error) => {
+//         if(error) {
+//             console.error(error);
+//         } else {
+//             fastify.http2 = true;
+//             fastify.https =  {
+//                 allowHTTP1: true,
+//                 key: process.env.FASTIFY_KEY,
+//                 cert: process.env.FASTIFY_CERT,
+//             };
+//         };
+//     });
+
 
 fastify.register(fastifyMultipart, optionsMultipart);
 
-fastify.register(helmet, optionsHelmet);
+// fastify.register(helmet, optionsHelmet);
 
-fastify.register(fastifyStatic, {
-    root: path.join(__dirname, 'static'),
+// fastify.register(fastifyStatic, {
+//     root: path.join(__dirname, 'static'),
+// })
+
+fastify.get('/ws', {websocket:true}, (socket, req) => {
+
+    socket.on('connection', (stream) => {
+        console.log('Alguien se conectó')
+    })
+    
+    socket.on('message', message => {
+        console.log('Mensaje recibido del cliente:', message.toString())
+        
+        // Envía una respuesta al cliente
+        socket.send('hi from server')
+    })
+
+    // Puedes manejar el evento 'close' si es necesario
+    socket.on('close', () => {
+        console.log('Conexión WebSocket cerrada')
+    })
+
 })
-
 //Esto se puede simplificar, creo, el plugin fastifyStatic, sirve los archivos, con los mime adecuados
 fastify.get('/', async function(request, reply) {
     try {
@@ -83,7 +106,7 @@ fastify.get('/', async function(request, reply) {
         const fileContent = await readFile(filePath, 'utf8');
         reply.type('text/html').send(fileContent);
     } catch (error) {
-        reply.code(500).send('Error reading file');
+        reply.code(404).send('No se pudo acceder al recurso, vuelva a intentarlo');
     }
     // return reply.sendFile('index.html')
 });
@@ -100,10 +123,11 @@ fastify.get('/index.js', async function (request, reply) {
 
 fastify.post('/register', {schema:registerSchema}, async function(req, rep){
     try {
-        const {username, email, password, foto} = req.body
+        const {username, email, password, foto} = req.body;
+           
         fs.writeFile(path.join(__dirname, 'resources', `${email}.jpg`), foto, e => {
             if(e) {
-                throw e;
+            throw e;
             }
         })
         console.log({username, email, password})
@@ -116,6 +140,7 @@ fastify.post('/register', {schema:registerSchema}, async function(req, rep){
         })
     } 
 });
+
     
 const start = async () => {
     try {

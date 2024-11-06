@@ -8,7 +8,7 @@
 </head>
 <body>
     <h1>Formulario de registro</h1>
-    <form enctype="multipart/form-data">
+    <form id= "register" enctype="multipart/form-data">
         <label for="username">Nombre de usuario:</label>
         <input type="text" id="username" name="username">
         <label for="password">Contraseña:</label>
@@ -19,6 +19,12 @@
         <input type="file" name="foto" id="foto">
         <input type="submit" name="send" id="send">
     </form>
+    <form id ="webSocket">
+        <label for="ws">Manda un mensaje</label>
+        <input type="text" name="ws" id="ws">
+        <input type="submit" name ="send" id="send">
+    </form>
+    <div id ="messages"></div>
     <script src="index.js"></script>
 </body>
 </html>
