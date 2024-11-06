@@ -80,25 +80,25 @@ fastify.register(fastifyMultipart, optionsMultipart);
 //     root: path.join(__dirname, 'static'),
 // })
 
-fastify.get('/ws', {websocket:true}, (socket, req) => {
+fastify.get('/ws', {websocket:true}, async (connection, req) => {
 
-    socket.on('connection', (stream) => {
+    // console.log(socket)
+    connection.socket.on('connection', () => {
         console.log('Alguien se conectó')
     })
-    
-    socket.on('message', message => {
+
+    connection.socket.on('message', message => {
         console.log('Mensaje recibido del cliente:', message.toString())
         
-        // Envía una respuesta al cliente
-        socket.send('hi from server')
+        connection.socket.send('hi from server')
     })
 
-    // Puedes manejar el evento 'close' si es necesario
-    socket.on('close', () => {
+    connection.socket.on('close', () => {
         console.log('Conexión WebSocket cerrada')
     })
 
 })
+
 //Esto se puede simplificar, creo, el plugin fastifyStatic, sirve los archivos, con los mime adecuados
 fastify.get('/', async function(request, reply) {
     try {
