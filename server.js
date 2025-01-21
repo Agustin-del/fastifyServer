@@ -56,7 +56,6 @@ const fastify = Fastify({
     logger: false,
 });
 
-fastify.register(fastifyWebsocket);
 // fastify.register(fastifyEnv, optionsEnv)
 //     .ready((error) => {
 //         if(error) {
@@ -76,21 +75,20 @@ fastify.register(fastifyMultipart, optionsMultipart);
 
 fastify.register(helmet, optionsHelmet);
 
+await fastify.register(fastifyWebsocket)
+
 // fastify.register(fastifyStatic, {
 //     root: path.join(__dirname, 'static'),
 // })
-fastify.register(async function(fastify) {
-    fastify.get('/ws',{websocket:true}, (socket, req) => {
-        console.log('hola desde el websocket')        
-        socket.on('message', message => {
-            console.log('Mensaje recibido del cliente:', message.toString())
-            
-            socket.send('hi from server')
-        })
-    
-    })
-})
 
+fastify.get('/ws',{websocket:true}, (socket, req) => {
+    socket.on('message', message => {
+        console.log('Mensaje recibido del cliente:', message.toString())
+    
+        socket.send('hi from server')
+    })
+
+})  
 //Esto se puede simplificar, creo, el plugin fastifyStatic, sirve los archivos, con los mime adecuados
 fastify.get('/', async function(request, reply) {
     try {
