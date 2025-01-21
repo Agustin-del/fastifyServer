@@ -1,5 +1,5 @@
 import Fastify from 'fastify';
-import fastifyEnv from '@fastify/env';
+// import fastifyEnv from '@fastify/env';
 import fastifyMultipart from '@fastify/multipart';
 import fastifyWebsocket from '@fastify/websocket';
 // import fastifyStatic from '@fastify/static';
@@ -53,7 +53,7 @@ const registerSchema = {
 };    
 
 const fastify = Fastify({
-    logger: true,
+    logger: false,
 });
 
 fastify.register(fastifyWebsocket);
@@ -74,29 +74,21 @@ fastify.register(fastifyWebsocket);
 
 fastify.register(fastifyMultipart, optionsMultipart);
 
-// fastify.register(helmet, optionsHelmet);
+fastify.register(helmet, optionsHelmet);
 
 // fastify.register(fastifyStatic, {
 //     root: path.join(__dirname, 'static'),
 // })
-
-fastify.get('/ws', {websocket:true}, async (connection, req) => {
-
-    // console.log(socket)
-    connection.socket.on('connection', () => {
-        console.log('Alguien se conectó')
+fastify.register(async function(fastify) {
+    fastify.get('/ws',{websocket:true}, (socket, req) => {
+        console.log('hola desde el websocket')        
+        socket.on('message', message => {
+            console.log('Mensaje recibido del cliente:', message.toString())
+            
+            socket.send('hi from server')
+        })
+    
     })
-
-    connection.socket.on('message', message => {
-        console.log('Mensaje recibido del cliente:', message.toString())
-        
-        connection.socket.send('hi from server')
-    })
-
-    connection.socket.on('close', () => {
-        console.log('Conexión WebSocket cerrada')
-    })
-
 })
 
 //Esto se puede simplificar, creo, el plugin fastifyStatic, sirve los archivos, con los mime adecuados
@@ -145,6 +137,7 @@ fastify.post('/register', {schema:registerSchema}, async function(req, rep){
 const start = async () => {
     try {
         await fastify.listen({port: 3000});
+        console.log('Running on http://localhost:3000')
     } catch (e) {
         fastify.log.error(e);
         process.exit(1);

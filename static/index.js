@@ -18,22 +18,24 @@ register.addEventListener('submit', (e) => {
     })
 })
 
-const socket = new WebSocket('ws://localhost:3000/ws')
 
-socket.onopen = () => {
-    console.log("conexión establecida con el servidor");
-    socket.send("hola desde el cliente");
-}
+const webSocket = document.getElementById('webSocket')
 
-socket.onmessage = (event) => {
-    console.log("Mensaje recibido del servidor: ", event.data);
-}
+const socket = new WebSocket('ws://localhost:3000/ws');
 
-socket.onclose = () => {
-    console.log('Conexión cerrada')
-}
+webSocket.addEventListener('submit', (event) => {
+    event.preventDefault()
+    if(socket.readyState === WebSocket.OPEN) {
+        socket.send(event.target[0].value)
+    } else {
+        console.error('Websocket is not open')
+    }
 
-socket.onerror = (error) => {
-    console.error('Error en la conexión: ', error);
-}
+    socket.addEventListener('message', (message) => {
+        console.log('message received: ', message.data)
+    })
+    
+})
+
+
 
