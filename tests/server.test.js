@@ -1,17 +1,17 @@
-import Fastify from "fastify";
-import fastifyEnv from '@fastify/env';
-import fastifyMultipart from "@fastify/multipart";
-import helmet from '@fastify/helmet';
-import fs from 'node:fs'
-import { readFile} from 'node:fs/promises';
-import {fileURLToPath} from 'node:url';
-import path, { format } from 'node:path';
-import request from "supertest";
+const Fastify = require("fastify");
+const fastifyEnv = require  ('@fastify/env');
+const fastifyMultipart = require ("@fastify/multipart");
+const helmet = require ('@fastify/helmet');
+const fs = require('node:fs') 
+const { readFile} = require ('node:fs/promises');
+const {fileURLToPath} = require ('node:url');
+const path = require ('node:path');
+const request = require ("supertest");
 
 //me falta ver lo de los campos adicionales, lo voy a dejar fallando.
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
 let NEXT_PORT = 3000;
 
 const resourcesPath = path.join(__dirname, 'resources');

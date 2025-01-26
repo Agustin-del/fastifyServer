@@ -2,12 +2,13 @@ const register = document.querySelector('#register')
 register.addEventListener('submit', (e) => {
     e.preventDefault();
     const registerData = new FormData(register);
-
+    
     fetch('/register', {
         method: 'POST',
         body: registerData,
     })
     .then(response => {
+        console.log(response)
         return response.json();
     })
     .then(data => {
