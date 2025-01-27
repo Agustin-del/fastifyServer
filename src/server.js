@@ -39,11 +39,12 @@ fastify.post('/register', async(req, rep) => {
     const foto = await req.body.foto.toBuffer()
 
     try {
-        if(!fs.existsSync(path.join(__dirname, '../resources'))) {
-            await fs.promises.mkdir(path.join(__dirname, '../resources'))
+
+        if(!fs.existsSync(path.join(process.cwd(), 'resources'))) {
+            await fs.promises.mkdir(path.join(process.cwd(), 'resources'))
         }
-        fs.promises.writeFile(path.join(__dirname, '../resources', `${email}.jpg`), foto)
-        fs.promises.writeFile(path.join(__dirname, '../resources', `${email}.txt`), JSON.stringify({username, password, email}))
+        fs.promises.writeFile(path.join(process.cwd(), 'resources', `${email}.jpg`), foto)
+        fs.promises.writeFile(path.join(process.cwd(), 'resources', `${email}.txt`), JSON.stringify({username, password, email}))
         rep.status(201)
         return {message:'register succesfully'}
     } catch (e) {
